@@ -1,4 +1,4 @@
-#include MouseDelta.ahk
+#include lib/MouseDelta.ahk
 #SingleInstance,Force
 
 
@@ -12,9 +12,9 @@ MOUSE_SPEED_CAP = 100
 SAMPLING_RATE = 0.05 
  
 ;UI
+VERBOSE_LOG = 0
 Gui, Add, ListBox, w600 h200 hwndhOutput
 Gui, Add, Text, xm w600 center, Hit F12 to toggle on / off
-Gui, Add, ListBox, w600 h200 hwndhOutputButtons
 Gui, Show,, Mouse Watcher
  
 ; init private variables
@@ -50,9 +50,8 @@ MouseEvent(MouseID, x := 0, y := 0){
  
 	t := A_TickCount
 	text := "x: " x ", y: " y (LastTime ? (", Delta Time: " t - LastTime " ms, MouseID: " MouseID) : "")
-	GuiControl, , % hOutput, % text
+	logV(text)
 	LastTime := t
-	sendmessage, 0x115, 7, 0,, % "ahk_id " hOutput
 
 	fillBuffer(x,y)
 }
@@ -82,7 +81,6 @@ toggle=0
 toggleTimer(){
 	global dutyCycleFull
 	global toggle
-	global hOutputButtons
 
 	If (toggle := !toggle){
 		SetTimer, timerTickLabel, %dutyCycleFull%
@@ -97,8 +95,6 @@ timerTickLabel:
 	timerTick()
 
 timerTick(){
-	global hOutputButtons
-
 	global KEY_MAP
 
 	global bufX
@@ -139,6 +135,7 @@ getDutyCycle(buf){
 	Return dutyCycle
 }
 
+; https://www.desmos.com/calculator/mjpywgnm6g
 accelerateFunction(x){
 	ACCELERATE_POINT_X = 0.3
 	ACCELERATE_POINT_Y = 0.05
@@ -171,21 +168,28 @@ pressAndReleaseKey(key,dutyCycle){
 
 pressKey(key){
 	Send, {%key% down} 
-	log(key " down")
+	logV(key " down")
 }
 
 releaseKey(key){
 	global keyUpTasks
 	Send, {%key% up}
 	keyUpTasks.Delete(Key)
-	log(key " up")
+	logV(key " up")
 }
 
 ; utils
 log(string){
-	global hOutputButtons
-	GuiControl, , % hOutputButtons, % string
-	sendmessage, 0x115, 7, 0,, % "ahk_id " hOutputButtons
+	global hOutput
+	GuiControl, , % hOutput, % string
+	sendmessage, 0x115, 7, 0,, % "ahk_id " hOutput
+}
+
+logV(string){
+	global VERBOSE_LOG
+	if (VERBOSE_LOG){
+		log(string)
+	}
 }
 
 atan2(y,x) {
