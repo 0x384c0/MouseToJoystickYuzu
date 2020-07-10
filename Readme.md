@@ -1,6 +1,6 @@
 ### Description
 
-This AutoHotkey script converts mouse movements in to button presses (L,I,J,K by default for Yuzu)
+This AutoHotkey script translates mouse movements in to button presses (L,I,J,K by default for Yuzu)
 
 ### Usage
 * [download](https://www.autohotkey.com/) and install AutoHotkey 
