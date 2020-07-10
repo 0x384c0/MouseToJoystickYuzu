@@ -7,9 +7,9 @@
 ; key bindings
 KEY_MAP := { RIGHT : "L", DOWN : "I", LEFT : "J", UP : "K"}
 ; pix/sec. larger value - slower movement
-MOUSE_SPEED_CAP = 250 
+MOUSE_SPEED_CAP = 100 
 ; sec. larger value - larger lag, but larger accuracy
-SAMPLING_RATE = 0.1 
+SAMPLING_RATE = 0.05 
  
 ;UI
 Gui, Add, ListBox, w600 h200 hwndhOutput
@@ -19,7 +19,7 @@ Gui, Show,, Mouse Watcher
  
 ; init private variables
 maxPixelsPerSample := MOUSE_SPEED_CAP * SAMPLING_RATE
-delay := SAMPLING_RATE * 1000
+dutyCycleFull := SAMPLING_RATE * 1000
 keyUpTasks := {}
 bufX=0
 bufY=0
@@ -57,7 +57,7 @@ MouseEvent(MouseID, x := 0, y := 0){
 	fillBuffer(x,y)
 }
 
-;TODO: refactor, create class and move it in separate file
+;TODO: refactor, create class and move it in separate file, remove global variables
 ;mouse to joystick 
 
 fillBuffer(x,y){
@@ -80,12 +80,12 @@ flushBuffer(){
 
 toggle=0
 toggleTimer(){
-	global delay
+	global dutyCycleFull
 	global toggle
 	global hOutputButtons
 
 	If (toggle := !toggle){
-		SetTimer, timerTickLabel, %delay%
+		SetTimer, timerTickLabel, %dutyCycleFull%
 		log("started")
 	} else{
 		SetTimer, timerTickLabel, Off
@@ -93,11 +93,12 @@ toggleTimer(){
 	}
 }
 
+timerTickLabel:
+	timerTick()
+
 timerTick(){
 	global hOutputButtons
 
-	global delay
-	global maxPixelsPerSample
 	global KEY_MAP
 
 	global bufX
@@ -109,37 +110,50 @@ timerTick(){
 		directionX := bufX > 0 ? "RIGHT" : "LEFT"
 		keyX := KEY_MAP[directionX]
 		
-		speedX :=  Abs(bufX / maxPixelsPerSample)
-		if (speedX > 1.1)
-			speedX := 1.1
-
-		pressTimeX := speedX * delay
-		pressAndReleaseKey(keyX,pressTimeX)
+		dutyCycle := getDutyCycle(bufX)
+		pressAndReleaseKey(keyX,dutyCycle)
 	}
 
 	if (bufY != 0){
 		directionY := bufY > 0 ? "UP" : "DOWN"
 		keyY := KEY_MAP[directionY]
-		
-		speedY :=  Abs(bufY / maxPixelsPerSample)
-		if (speedY > 1)
-			speedY := 1 
 
-		pressTimeY := speedY * delay
-		pressAndReleaseKey(keyY,pressTimeY)
+		dutyCycle := getDutyCycle(bufY)
+		pressAndReleaseKey(keyY,dutyCycle)
 	}
 
 	flushBuffer()
 }
 
-timerTickLabel:
-	timerTick()
+
+getDutyCycle(buf){
+	global maxPixelsPerSample
+	global dutyCycleFull
+
+	dutyCycleMultiplier :=  Abs(buf / maxPixelsPerSample)
+	dutyCycleMultiplier := accelerateFunction(dutyCycleMultiplier)
+	if (dutyCycleMultiplier > 1.1)
+		dutyCycleMultiplier := 1.1
+
+	dutyCycle := dutyCycleMultiplier * dutyCycleFull
+	Return dutyCycle
+}
+
+accelerateFunction(x){
+	ACCELERATE_POINT_X = 0.3
+	ACCELERATE_POINT_Y = 0.05
+	if (x < ACCELERATE_POINT_X)
+		y := (x - 1) * (1 - ACCELERATE_POINT_Y) / (1 - ACCELERATE_POINT_X) + 1
+	else 
+		y := x * ACCELERATE_POINT_Y / ACCELERATE_POINT_X
+	Return y
+}
 
 ; keys
-pressAndReleaseKey(key,pressTime){
+pressAndReleaseKey(key,dutyCycle){
 	global keyUpTasks
 	
-	if (pressTime is number && pressTime > 0){
+	if (dutyCycle is number && dutyCycle > 0){
 		prevousKeyUpTask := keyUpTasks[key]
 		if prevousKeyUpTask {
 			SetTimer, % prevousKeyUpTask, Off ; cancel previous up button task, and schelule new
@@ -148,8 +162,8 @@ pressAndReleaseKey(key,pressTime){
 		}
 		; schedule key up task
 		keyUpTask := Func("releaseKey").bind(key)
-		pressTimeOnse := pressTime * -1
-		SetTimer, % keyUpTask, %pressTimeOnse%
+		dutyCycleOnse := dutyCycle * -1
+		SetTimer, % keyUpTask, %dutyCycleOnse%
 		; save key up task
 		keyUpTasks[key] := keyUpTask 
 	}
@@ -167,30 +181,6 @@ releaseKey(key){
 	log(key " up")
 }
 
-deltasToKeys(x,y){
-	directionX := x > 0 ? "RIGHT" : "LEFT"
-	directionY := y > 0 ? "DOWN" : "UP"
-
-	pressesX := deltaToKeys(x,directionX)
-	pressesY := deltaToKeys(y,directionY)
-	loop % pressesY.length(){ ; iterate through the array2
-		pressesX.push(pressesY.pop()) ; remove the last entry of array2 and put it at the end of array1
-	}
-	Return pressesX
-}
-
-deltaToKeys(delta,direction){
-	DELTA_PER_KEY_PRESS = 50
-	pressesCount :=  Floor(Abs(delta / DELTA_PER_KEY_PRESS))
-	result := []
-	Loop, %pressesCount% {
-		result.Push(direction)
-	}
-	Return result
-}
-
-
-
 ; utils
 log(string){
 	global hOutputButtons
@@ -202,8 +192,7 @@ atan2(y,x) {
 	Return atan(y/x)+4*atan((x<0)*((y>0)-(y<0)))
 }
 
-join( strArray )
-{
+join( strArray ){
   s := ""
   for i,v in strArray
     s .= ", " . v
