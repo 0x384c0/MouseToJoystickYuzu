@@ -1,4 +1,5 @@
 #include lib/MouseDelta.ahk
+#Include lib/SystemCursor.ahk
 #SingleInstance,Force
 
 
@@ -37,6 +38,7 @@ GuiClose:
 
 F12::
 	MacroOn := !MacroOn
+	SystemCursor(!MacroOn)
 	md.SetState(MacroOn)
 	toggleTimer()
 	return
