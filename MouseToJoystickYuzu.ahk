@@ -1,6 +1,8 @@
 #include lib/MouseDelta.ahk
 #Include lib/SystemCursor.ahk
+#Include lib/LogGui.ahk
 #SingleInstance,Force
+#NoEnv  ; Recommended for performance and compatibility with future AutoHotkey releases.
 
 
 ;Parameters
@@ -13,10 +15,7 @@ MOUSE_SPEED_CAP = 100
 SAMPLING_RATE = 0.05 
  
 ;UI
-VERBOSE_LOG = 0
-Gui, Add, ListBox, w600 h200 hwndhOutput
-Gui, Add, Text, xm w600 center, Hit F12 to toggle on / off
-Gui, Show,, Mouse Watcher
+logGui := new LogGui(0)
  
 ; init private variables
 maxPixelsPerSample := MOUSE_SPEED_CAP * SAMPLING_RATE
@@ -46,20 +45,16 @@ F12::
 ; Gets called when mouse moves
 ; x and y are DELTA moves (Amount moved since last message), NOT coordinates.
 MouseEvent(MouseID, x := 0, y := 0){
-	global hOutput
-	static text := ""
 	static LastTime := 0
- 
 	t := A_TickCount
-	text := "x: " x ", y: " y (LastTime ? (", Delta Time: " t - LastTime " ms, MouseID: " MouseID) : "")
-	logV(text)
+	logGui.logV("x: " x ", y: " y (LastTime ? (", Delta Time: " t - LastTime " ms, MouseID: " MouseID) : ""))
 	LastTime := t
 
 	fillBuffer(x,y)
 }
 
 ;TODO: refactor, create class and move it in separate file, remove global variables
-;mouse to joystick 
+;mouse to joystick
 
 fillBuffer(x,y){
 	global bufX
@@ -86,10 +81,10 @@ toggleTimer(){
 
 	If (toggle := !toggle){
 		SetTimer, timerTickLabel, %dutyCycleFull%
-		log("started")
+		logGui.log("started")
 	} else{
 		SetTimer, timerTickLabel, Off
-		log("stopped")
+		logGui.log("stopped")
 	}
 }
 
@@ -170,34 +165,17 @@ pressAndReleaseKey(key,dutyCycle){
 
 pressKey(key){
 	Send, {%key% down} 
-	logV(key " down")
+	logGui.logV(key " down")
 }
 
 releaseKey(key){
 	global keyUpTasks
 	Send, {%key% up}
 	keyUpTasks.Delete(Key)
-	logV(key " up")
+	logGui.logV(key " up")
 }
 
 ; utils
-log(string){
-	global hOutput
-	GuiControl, , % hOutput, % string
-	sendmessage, 0x115, 7, 0,, % "ahk_id " hOutput
-}
-
-logV(string){
-	global VERBOSE_LOG
-	if (VERBOSE_LOG){
-		log(string)
-	}
-}
-
-atan2(y,x) {
-	Return atan(y/x)+4*atan((x<0)*((y>0)-(y<0)))
-}
-
 join( strArray ){
   s := ""
   for i,v in strArray
