@@ -2,9 +2,10 @@
 #SingleInstance,Force
 #NoEnv
 
-#include <MouseDelta>
-#Include <SystemCursor>
-#Include <LogGui>
+#include ../../
+#include lib/MouseDelta.ahk
+#Include lib/SystemCursor.ahk
+#Include lib/LogGui.ahk
 
 ;Parameters
 ; key bindings
@@ -30,17 +31,33 @@ md := new MouseDelta("MouseEvent")
  
 return
 
+
 GuiClose:
 	md.Delete()
 	md := ""
 	ExitApp
 
 F12::
+    ToggleKeys := !ToggleKeys
 	MacroOn := !MacroOn
 	SystemCursor(!MacroOn)
 	md.SetState(MacroOn)
 	toggleTimer()
 	return
+
+    
+; kay remap
+#If ToggleKeys
+LButton::2 ; shoot
+RButton::1 ; sink
+MButton::w ; grenade
+w::Up
+a::Left
+s::Down
+d::Right
+Space::s ; jump or back
+Enter::a ; A
+#if
  
 ; Gets called when mouse moves
 ; x and y are DELTA moves (Amount moved since last message), NOT coordinates.

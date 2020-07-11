@@ -1,10 +1,10 @@
 
 Class LogGui {
-	__New(verbose){
+	__New(title, subtitle, verbose){
 		this.verbose := verbose
 		Gui, Add, ListBox, w600 h200 hwndhOutput
-		Gui, Add, Text, xm w600 center, Hit F12 to toggle on / off
-		Gui, Show,, Mouse Watcher
+		Gui, Add, Text, xm w600 center, %subtitle%
+		Gui, Show,, %title%
 		this.hOutput := hOutput
 	}
 
