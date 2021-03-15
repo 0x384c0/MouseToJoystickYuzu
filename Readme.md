@@ -1,3 +1,6 @@
+### Deprecated
+  It looks like simular functionality [implemented in yuzu](https://github.com/yuzu-emu/yuzu/pull/5869)
+
 ### Description
 
 This AutoHotkey script translates mouse movements in to button presses (L,I,J,K by default for Yuzu)
