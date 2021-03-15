@@ -1,5 +1,5 @@
 ### Deprecated
-  It looks like similar functionality [implemented in yuzu](https://github.com/yuzu-emu/yuzu/pull/5869)
+  It looks like similar functionality [implemented in yuzu](https://github.com/yuzu-emu/yuzu/pull/5869). [Video](https://www.youtube.com/watch?v=3G597nwOLDI)
 
 ### Description
 
