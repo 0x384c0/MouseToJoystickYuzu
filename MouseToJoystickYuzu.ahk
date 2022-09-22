@@ -5,6 +5,7 @@
 #include <MouseDelta>
 #Include <SystemCursor>
 #Include <LogGui>
+#Include <ClipCursor>
 
 ;Parameters
 ; key bindings
@@ -15,7 +16,8 @@ MOUSE_SPEED_CAP = 100
 SAMPLING_RATE = 0.05 
  
 ;UI
-logGui := new LogGui("Mouse to joystick","Hit F12 to toggle on / off",0)
+VERBOSE_LOG := False
+logGui := new LogGui("Mouse to joystick","Hit F12 to toggle on / off", VERBOSE_LOG)
  
 ; init private variables
 maxPixelsPerSample := MOUSE_SPEED_CAP * SAMPLING_RATE
@@ -40,7 +42,29 @@ F12::
 	SystemCursor(!MacroOn)
 	md.SetState(MacroOn)
 	toggleTimer()
+	clipCursorInYuzu(MacroOn)
 	return
+
+
+; Clip Cursor
+clipCursorInYuzu(IsClipped){
+	; WinGetPos VarX, VarY, Width, Height, "yuzu "
+	; VarX2 := VarX + Width
+	; VarY2 := VarY + Height
+	; logGui.logV("clipCursor VarX: " VarX ", VarY: " VarY ", VarX2:" VarX2 ", VarY2:" VarY2)
+	; ClipCursor(IsClipped, VarX, VarY, VarX2, VarY2)
+	WinGetPos, X, Y, Width, Height, yuzu
+	SysGet, XFrame, 32
+	SysGet, YFrame, 33
+	SysGet, caption, 4
+	X2 := Width - XFrame
+	Y2 := Height - YFrame
+	X := X + XFrame
+	Y := Y + caption + YFrame
+	X := 10
+	logGui.logV("clipCursor X: " X ", Y: " Y ", X2:" X2 ", Y2:" Y2)
+	return ClipCursor(IsClipped, X, Y, X2, Y2)
+}
  
 ; Gets called when mouse moves
 ; x and y are DELTA moves (Amount moved since last message), NOT coordinates.
