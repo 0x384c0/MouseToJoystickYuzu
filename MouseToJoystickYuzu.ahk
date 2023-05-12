@@ -13,7 +13,7 @@ KEY_MAP := { RIGHT : "L", DOWN : "I", LEFT : "J", UP : "K"}
 ; pix/sec. larger value - slower movement
 MOUSE_SPEED_CAP = 100 
 ; sec. larger value - larger lag, but larger accuracy
-SAMPLING_RATE = 0.05 
+SAMPLING_RATE = 0.2 
  
 ;UI
 VERBOSE_LOG := False
@@ -45,6 +45,14 @@ F12::
 	clipCursorInYuzu(MacroOn)
 	return
 
+; Additional key bindings
+; #if MacroOn
+; 	LButton::v
+; #If
+
+; #if MacroOn
+; 	RButton::Right
+; #If
 
 ; Clip Cursor
 clipCursorInYuzu(IsClipped){
